@@ -31,12 +31,8 @@ from datetime import datetime, timedelta
 
 from flask import Flask, render_template, request, redirect
 from flask_wtf import FlaskForm
-from wtforms import (
-    TimeField,
-    IntegerField,
-    validators,
-    SubmitField,
-)
+from wtforms import TimeField, IntegerField, validators, SubmitField, StringField
+from wtforms.validators import DataRequired
 from flask_bootstrap import Bootstrap
 
 import firebase_admin
@@ -50,6 +46,21 @@ db_url = "https://esp32-b7cbf-default-rtdb.firebaseio.com/"
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
 Bootstrap(app)
+
+
+class loginFeeder(FlaskForm):
+    feeder_id = StringField("Unique feeder id:", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    form = loginFeeder(request.form)
+    if request.method == "GET":
+        return render_template("index.html", form=form)
+    if form.validate_on_submit():
+        feeder_id = form.feeder_id.data
+        return redirect("/" + str(feeder_id))
 
 
 @app.route("/<feeder_id>/feedNow", methods=["GET", "POST"])
