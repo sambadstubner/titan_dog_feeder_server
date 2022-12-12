@@ -27,7 +27,8 @@ REQUIRED ROUTES:
  - Redirect to /<user_id>
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import pytz
 
 from flask import Flask, render_template, request, redirect
 from flask_wtf import FlaskForm
@@ -46,6 +47,8 @@ db_url = "https://esp32-b7cbf-default-rtdb.firebaseio.com/"
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
 Bootstrap(app)
+
+MST = pytz.timezone("US/Mountain")
 
 
 class loginFeeder(FlaskForm):
@@ -109,7 +112,9 @@ def editSchedule(feeder_id):
             EditScheduleForm,
             "t" + str(i),
             TimeField(
-                "Time", format="%H:%M", default=datetime.strptime(time[i], "%H:%M")
+                "Time",
+                format="%H:%M",
+                default=datetime.strptime(time[i], "%H:%M"),
             ),
         )
         setattr(
@@ -166,7 +171,7 @@ def add(feeder_id):
     # Get schedule from db
     ref = db.reference(path=feeder_id + "/schedule", app=fb, url=db_url)
     schedule = ref.get()
-    now = datetime.now()
+    now = datetime.now(MST)
     unique = False
     delta = timedelta(minutes=1)
     while unique == False:
